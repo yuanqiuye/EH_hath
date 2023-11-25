@@ -47,11 +47,15 @@ public class ServerHandler {
 
 	private HentaiAtHomeClient client;
 	private static boolean loginValidated = false;
-	private long lastOverloadNotification;
+	private static long lastOverloadNotification;
 
 	public ServerHandler(HentaiAtHomeClient client) {
 		this.client = client;
 		lastOverloadNotification = 0;
+	}
+
+	public static int getLastOverload(){
+		return (int)(lastOverloadNotification/1000);
 	}
 
 	public static URL getServerConnectionURL(String act) {

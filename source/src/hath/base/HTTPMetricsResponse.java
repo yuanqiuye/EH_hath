@@ -228,6 +228,11 @@ public class HTTPMetricsResponse {
 				"Epoch timestamp of last server contact", "counter",
 				"eh_hath_last_server_contact_epoch",
 				Stats.getLastServerContact(), defaultLabels);
+		
+		appendMetric(builder,
+				"Epoch timestamp of last overload", "counter",
+				"eh_hath_last_overload",
+				ServerHandler.getLastOverload(), defaultLabels);
 
 		return builder.toString();
 	}
