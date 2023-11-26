@@ -44,6 +44,8 @@ public class HTTPMetricsServer implements Runnable {
 		try {
 			Out.info("Starting up the internal metrics exporter Server...");
 
+			Stats.trackBytesSentHistory(); // Set trackBytesSentHistory, in order to record sent bytes
+
 			// Set defaults
 			if (port == 0) port = 9950; // One of the free ports in the promethues port allocation list(14.02.2022 17:00 UTC)
 			if (address == null) address = InetAddress.getByName("127.0.0.1");
