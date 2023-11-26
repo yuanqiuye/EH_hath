@@ -234,6 +234,13 @@ public class HTTPMetricsResponse {
 				"eh_hath_last_overload",
 				ServerHandler.getLastOverload(), defaultLabels);
 
+		appendMetric(builder,
+				"Current static range count", "counter",
+				"eh_hath_staic_range_count",
+				Settings.getStaticRangeCount(), defaultLabels);
+		
+				
+
 		return builder.toString();
 	}
 	
