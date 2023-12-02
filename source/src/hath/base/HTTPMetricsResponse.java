@@ -232,7 +232,7 @@ public class HTTPMetricsResponse {
 		appendMetric(builder,
 				"Epoch timestamp of last overload", "counter",
 				"eh_hath_last_overload",
-				ServerHandler.getLastOverload(), defaultLabels);
+				Stats.getLastOverload(), defaultLabels);
 
 		appendMetric(builder,
 				"Current static range count", "counter",

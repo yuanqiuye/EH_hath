@@ -47,15 +47,11 @@ public class ServerHandler {
 
 	private HentaiAtHomeClient client;
 	private static boolean loginValidated = false;
-	private static long lastOverloadNotification;
+	private long lastOverloadNotification;
 
 	public ServerHandler(HentaiAtHomeClient client) {
 		this.client = client;
 		lastOverloadNotification = 0;
-	}
-
-	public static int getLastOverload(){
-		return (int)(lastOverloadNotification/1000);
 	}
 
 	public static URL getServerConnectionURL(String act) {
@@ -124,6 +120,7 @@ public class ServerHandler {
 
 		if(lastOverloadNotification < nowtime - 30000) {
 			lastOverloadNotification = nowtime;
+			Stats.setLastOverload(lastOverloadNotification);
 			return simpleNotification(ACT_OVERLOAD, "Overload");
 		}
 

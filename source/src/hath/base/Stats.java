@@ -39,6 +39,7 @@ public class Stats {
 	private static long bytesSent, bytesRcvd;
 	private static int cacheCount;
 	private static long cacheSize;
+	private static long lastOverload;
 	private static int[] bytesSentHistory;
 	private static int openConnections;
 	private static int lastServerContact;
@@ -103,6 +104,7 @@ public class Stats {
 		bytesRcvd = 0;
 		cacheCount = 0;
 		cacheSize = 0;
+		lastOverload = 0;
 		resetBytesSentHistory();
 
 		statChanged("reset");
@@ -196,6 +198,10 @@ public class Stats {
 		statChanged("cacheSize");
 	}
 
+	public static void setLastOverload(long overload){
+		lastOverload = overload;
+	}
+
 	public static void setOpenConnections(int conns) {
 		openConnections = conns;
 		statChanged("openConnections");
@@ -262,6 +268,10 @@ public class Stats {
 
 	public static long getCacheSize() {
 		return cacheSize;
+	}
+
+	public static int getLastOverload(){
+		return (int)(lastOverload/1000);
 	}
 
 	public static long getCacheFree() {
