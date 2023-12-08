@@ -38,6 +38,7 @@ public class GUIThreaded implements Runnable {
 		this.action = action;
 		myThread = new Thread(this);
 		myThread.start();
+		myThread.setName("GUIThreaded");
 	}
 
 	public void run() {

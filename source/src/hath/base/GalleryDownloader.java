@@ -52,6 +52,7 @@ public class GalleryDownloader implements Runnable {
 		downloadLimiter = Settings.isDisableDownloadBWM() ? null : new HTTPBandwidthMonitor();
 		myThread = new Thread(this);
 		myThread.start();
+		myThread.setName("GalleryDownloader");
 	}
 
 	public void run() {

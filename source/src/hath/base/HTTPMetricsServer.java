@@ -56,6 +56,7 @@ public class HTTPMetricsServer implements Runnable {
 			
 			myThread = new Thread(this);
 			myThread.start();
+			myThread.setName("HTTPMetricsServer");
 
 			Out.info("Internal metrics exporter Server was successfully started, and is listening on port " + port);
 

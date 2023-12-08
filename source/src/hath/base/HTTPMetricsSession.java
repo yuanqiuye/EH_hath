@@ -57,6 +57,7 @@ public class HTTPMetricsSession implements Runnable {
 	public void handleSession() {
 		myThread = new Thread(this);
 		myThread.start();
+		myThread.setName("HTTPMetricsSession");
 	}
 
 	private void connectionFinished() {

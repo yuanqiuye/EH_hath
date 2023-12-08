@@ -121,6 +121,7 @@ public class HTTPServer implements Runnable {
 			
 			myThread = new Thread(this);
 			myThread.start();
+			myThread.setName("HTTPServer");
 
 			Out.info("Internal HTTP Server was successfully started, and is listening on port " + port);
 

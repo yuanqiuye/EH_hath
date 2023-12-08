@@ -165,6 +165,7 @@ public class HentaiAtHomeClientGUI extends JFrame implements HathGUI, ActionList
 
 		myThread = new Thread(this);
 		myThread.start();
+		myThread.setName("HentaiAtHomeClientGUI");
 
 		try {
 			Thread.currentThread().sleep(startVisible ? 2000 : 60000);

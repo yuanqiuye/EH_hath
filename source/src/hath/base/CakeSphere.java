@@ -41,6 +41,7 @@ public class CakeSphere implements Runnable {
 		// Cake and grief counseling will be available at the conclusion of the test.
 		doResume = resume;
 		myThread.start();
+		myThread.setName("CakeSphere");
 	}
 	
 	public void run() {

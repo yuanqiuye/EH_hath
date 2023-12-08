@@ -86,6 +86,7 @@ public class FileDownloader implements Runnable {
 		if(myThread == null) {
 			myThread = new Thread(this);
 			myThread.start();
+			myThread.setName("FileDownloader");
 		}
 	}
 

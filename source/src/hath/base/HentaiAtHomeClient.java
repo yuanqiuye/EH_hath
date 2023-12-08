@@ -78,6 +78,7 @@ public class HentaiAtHomeClient implements Runnable {
 
 		myThread = new Thread(this);
 		myThread.start();
+		myThread.setName("HentaiAtHomeClient");
 	}
 
 	// master thread for all regularly scheduled tasks

@@ -115,6 +115,7 @@ public class ProxyFileDownloader implements Runnable {
 				// at this point, everything is ready to receive data from the server and pass it to the client. in order to do this, we'll fork off a new thread to handle the reading, while this thread returns.
 				// control will thus pass to the HTTPSession where this HRP's read functions will be called, and data will be written to the connection this proxy request originated from.
 				myThread.start();
+				myThread.setName("ProxyFileDownloader");
 
 				retval = 200;
 				break;

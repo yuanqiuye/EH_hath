@@ -64,6 +64,7 @@ public class HTTPSession implements Runnable {
 	public void handleSession() {
 		myThread = new Thread(this);
 		myThread.start();
+		myThread.setName("HTTPSession");
 	}
 
 	private void connectionFinished() {
