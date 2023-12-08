@@ -194,6 +194,7 @@ public class HTTPResponse {
 			}
 			else if(requestedHVFile.getLocalFileRef().exists()) {	
 				// hpc will update responseStatusCode
+				Out.info("Response is checking file id exist: "+requestedHVFile.getFileid());
 				hpc = new HTTPResponseProcessorFile(requestedHVFile);
 				session.getHTTPServer().getHentaiAtHomeClient().getCacheHandler().markRecentlyAccessed(requestedHVFile);
 			}

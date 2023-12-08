@@ -64,7 +64,7 @@ public class HTTPSession implements Runnable {
 	public void handleSession() {
 		myThread = new Thread(this);
 		myThread.start();
-		myThread.setName("HTTPSession");
+		myThread.setName("Ses");
 	}
 
 	private void connectionFinished() {
@@ -117,8 +117,19 @@ public class HTTPSession implements Runnable {
 
 			// get the status code and response processor - in case of an error, this will be a text type with the error message
 			hpc = hr.getHTTPResponseProcessor();
+			if(hpc instanceof HTTPResponseProcessorFile) {
+				myThread.setName("Ses_File");
+			}
+			else if(hpc instanceof HTTPResponseProcessorProxy) {
+				myThread.setName("Ses_Proxy");
+			}
+			else if(hpc instanceof HTTPResponseProcessorSpeedtest) {
+				myThread.setName("Ses_SpeedTest");
+			}
+	
 			int statusCode = hr.getResponseStatusCode();
 			int contentLength = hpc.getContentLength();
+			
 
 			// we'll create a new date formatter for each session instead of synchronizing on a shared formatter. (sdf is not thread-safe)
 			SimpleDateFormat sdf = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss", java.util.Locale.US);

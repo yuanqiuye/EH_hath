@@ -42,7 +42,6 @@ public class HVFile {
 	}
 
 	public File getLocalFileRef() {
-		Out.info("create file id instance: "+getFileid());
 		return new File(Settings.getCacheDir(), hash.substring(0, 2) + "/" + hash.substring(2, 4) + "/" + getFileid());
 	}
 	
