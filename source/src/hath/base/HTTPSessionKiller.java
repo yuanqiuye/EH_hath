@@ -37,6 +37,7 @@ public class HTTPSessionKiller implements Runnable {
 	
 	public void satsuriku() {
 		rachel.start();
+		rachel.setName("HTTPSessionKiller");
 	}
 
 	public void run() {
