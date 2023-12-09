@@ -103,6 +103,9 @@ public class HTTPResponseProcessorFile extends HTTPResponseProcessor {
 
 			while(readbytes > fileBuffer.position()) {
 				fileBytes += fileChannel.read(fileBuffer);
+				if(fileBytes < 0){
+					break;
+				}
 			}
 
 			fileBuffer.flip();
