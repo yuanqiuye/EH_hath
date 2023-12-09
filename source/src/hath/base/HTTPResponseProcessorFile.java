@@ -53,7 +53,7 @@ public class HTTPResponseProcessorFile extends HTTPResponseProcessor {
 			ByteBuffer tmpBuffer = ByteBuffer.allocateDirect(10);
 			int readByte = 0;
 			int i;
-			for(i = 0; i < 10; i++){
+			for(i = 0; i < 3; i++){
 				readByte = fileChannel.read(tmpBuffer);
 				if(readByte <= 0){
 					throw new java.io.IOException();
