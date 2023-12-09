@@ -98,7 +98,6 @@ public class HTTPResponseProcessorFile extends HTTPResponseProcessor {
 			fileBuffer.compact();
 
 			while(readbytes > fileBuffer.position()) {
-				Out.info("Refilled buffer for " + requestedHVFile + " with " + fileBytes + " bytes, new remaining=" + fileBuffer.remaining());
 				fileBytes += fileChannel.read(fileBuffer);
 			}
 

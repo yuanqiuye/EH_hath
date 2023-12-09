@@ -217,8 +217,6 @@ public class HTTPSession implements Runnable {
 						tcpBuffer.get(buffer, 0, lastWriteLen);
 						writer.write(buffer, 0, lastWriteLen);
 						writtenBytes += lastWriteLen;
-						
-						Out.info("Wrote " + lastWriteLen + " content bytes to socket for connId=" + connId + " with contentLength=" + contentLength);
 
 						if(!localNetworkAccess) {
 							Stats.bytesSent(lastWriteLen);
