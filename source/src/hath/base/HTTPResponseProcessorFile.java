@@ -50,7 +50,8 @@ public class HTTPResponseProcessorFile extends HTTPResponseProcessor {
 			fileBuffer.flip();
 
 			//check if file still exist (EOF)
-			int readByte = fileChannel.read(fileBuffer);
+			ByteBuffer tmpBuffer = ByteBuffer.allocateDirect(10);
+			int readByte = fileChannel.read(tmpBuffer);
 			long pos = fileChannel.position();
 			fileChannel.position(pos - readByte);
 			if(readByte < 0){
