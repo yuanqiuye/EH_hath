@@ -55,6 +55,7 @@ public class HTTPResponseProcessorFile extends HTTPResponseProcessor {
 			int i;
 			for(i = 0; i < 3; i++){
 				readByte = fileChannel.read(tmpBuffer);
+				tmpBuffer.clear();
 				if(readByte <= 0){
 					throw new java.io.IOException();
 				}
