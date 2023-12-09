@@ -48,20 +48,6 @@ public class HTTPResponseProcessorFile extends HTTPResponseProcessor {
 			fileBuffer = ByteBuffer.allocateDirect(Settings.isUseLessMemory() ? 8192 : 65536);
 			fileChannel.read(fileBuffer);
 			fileBuffer.flip();
-
-			//check if file still exist (EOF)
-			ByteBuffer tmpBuffer = ByteBuffer.allocateDirect(10);
-			int readByte = 0;
-			int i;
-			for(i = 0; i < 3; i++){
-				readByte = fileChannel.read(tmpBuffer);
-				tmpBuffer.clear();
-				if(readByte <= 0){
-					throw new java.io.IOException();
-				}
-			}
-			long pos = fileChannel.position();
-			fileChannel.position(pos - readByte * 3);
 			
 			responseStatusCode = 200;
 			Stats.fileSent();
