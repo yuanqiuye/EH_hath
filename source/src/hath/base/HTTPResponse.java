@@ -26,6 +26,7 @@ package hath.base;
 import java.util.*;
 import java.util.regex.Pattern;
 import java.net.URL;
+import java.text.DecimalFormat;
 
 public class HTTPResponse {
 	private static final Pattern absoluteUriPattern = Pattern.compile("^http://[^/]+/", Pattern.CASE_INSENSITIVE);
@@ -164,6 +165,9 @@ public class HTTPResponse {
 			}
 
 			String fileid = urlparts[2];
+			if(Stats.getOpenConnections()>20){
+				Out.info("Get file request, file id: "+fileid);
+			}
 			HVFile requestedHVFile = HVFile.getHVFileFromFileid(fileid);
 			Hashtable<String,String> additional = Tools.parseAdditional(urlparts[3]);
 			boolean keystampRejected = true;
@@ -184,7 +188,9 @@ public class HTTPResponse {
 			
 			String fileindex = additional.get("fileindex");
 			String xres = additional.get("xres");
-			
+
+			long nowtime = System.currentTimeMillis();
+			Out.info("Started to checked file id complete: "+requestedHVFile.getFileid());
 			if(keystampRejected) {
 				responseStatusCode = 403;
 			}
@@ -194,7 +200,9 @@ public class HTTPResponse {
 			}
 			else if(requestedHVFile.getLocalFileRef().exists()) {	
 				// hpc will update responseStatusCode
-				Out.info("Response is checking file id exist: "+requestedHVFile.getFileid());
+				long sendTime = System.currentTimeMillis() - nowtime;
+				DecimalFormat df = new DecimalFormat("0.00");
+				Out.info("Response checked file id complete: "+requestedHVFile.getFileid() + ", timed used: "+df.format(sendTime/1000));
 				hpc = new HTTPResponseProcessorFile(requestedHVFile);
 				session.getHTTPServer().getHentaiAtHomeClient().getCacheHandler().markRecentlyAccessed(requestedHVFile);
 			}

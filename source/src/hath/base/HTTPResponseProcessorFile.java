@@ -94,7 +94,7 @@ public class HTTPResponseProcessorFile extends HTTPResponseProcessor {
 			while(readbytes > fileBuffer.position()) {
 				fileBytes += fileChannel.read(fileBuffer);
 				if(fileBytes < -5){
-					throw new java.io.IOException();
+					throw new java.io.IOException("read failed, id: "+requestedHVFile.getFileid());
 				}
 			}
 

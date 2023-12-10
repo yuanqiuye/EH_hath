@@ -113,6 +113,9 @@ public class HTTPSession implements Runnable {
 			} while(true);
 			
 			hr = new HTTPResponse(this);
+			if(Stats.getOpenConnections()>20){
+				Out.info("Started to parse response, connid: "+connId);
+			}
 			hr.parseRequest(request, localNetworkAccess);
 
 			// get the status code and response processor - in case of an error, this will be a text type with the error message
@@ -174,7 +177,9 @@ public class HTTPSession implements Runnable {
 
 			writer.write(headerBytes, 0, headerBytes.length);
 			
-			//Out.debug("Wrote " +  headerBytes.length + " header bytes to socket for connId=" + connId + " with contentLength=" + contentLength);
+			if(Stats.getOpenConnections()>20){
+				Out.info("Wrote " +  headerBytes.length + " header bytes to socket for connId=" + connId + " with contentLength=" + contentLength);
+			}
 
 			if(!localNetworkAccess) {
 				Stats.bytesSent(headerBytes.length);
@@ -233,7 +238,7 @@ public class HTTPSession implements Runnable {
 			}
 		}
 		catch(Exception e) {
-			Out.info(info + "The connection was interrupted or closed by the remote host.");
+			Out.info(info + "The connection was interrupted or closed by the remote host: " + e.toString());
 			Out.debug(e == null ? "(no exception)" : e.getMessage());
 			//e.printStackTrace();
 		}
