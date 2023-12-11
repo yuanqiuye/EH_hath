@@ -24,6 +24,10 @@ along with Hentai@Home.  If not, see <http://www.gnu.org/licenses/>.
 package hath.base;
 
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.regex.Pattern;
 import java.net.URL;
 import java.text.DecimalFormat;
@@ -123,7 +127,76 @@ public class HTTPResponse {
 		return new HTTPResponseProcessorText("OK:" + successfulTests + "-" + totalTimeMillis);
 	}
 
-	public void parseRequest(String request, boolean localNetworkAccess) {
+	private String proceesFileRequest(String[] urlparts){
+		if(urlparts.length < 4) {
+			responseStatusCode = 400;
+			return "None";
+		}
+
+		String fileid = urlparts[2];
+		if(Stats.getOpenConnections()>20){
+			Out.info("Get file request, file id: "+fileid);
+		}
+		HVFile requestedHVFile = HVFile.getHVFileFromFileid(fileid);
+		Hashtable<String,String> additional = Tools.parseAdditional(urlparts[3]);
+		boolean keystampRejected = true;
+
+		try {
+			String[] keystampParts = additional.get("keystamp").split("-");
+			
+			if(keystampParts.length == 2) {
+				int keystampTime = Integer.parseInt(keystampParts[0]);
+
+				if(Math.abs(Settings.getServerTime() - keystampTime) < 900) {
+					if( keystampParts[1].equalsIgnoreCase(Tools.getSHA1String(keystampTime + "-" + fileid + "-" + Settings.getClientKey() + "-hotlinkthis").substring(0, 10)) ) {
+						keystampRejected = false;
+					}
+				}
+			}
+		} catch(Exception e) {}
+		
+		String fileindex = additional.get("fileindex");
+		String xres = additional.get("xres");
+
+		long nowtime = System.currentTimeMillis();
+		Out.info("Started to checked file id complete: "+requestedHVFile.getFileid());
+		if(keystampRejected) {
+			responseStatusCode = 403;
+		}
+		else if(requestedHVFile == null || fileindex == null || xres == null || !Pattern.matches("^\\d+$", fileindex) || !Pattern.matches("^org|\\d+$", xres)) {
+			Out.debug(session + " Invalid or missing arguments.");
+			responseStatusCode = 404;
+		}
+		else if(requestedHVFile.getLocalFileRef().exists()) {	
+			// hpc will update responseStatusCode
+			long sendTime = System.currentTimeMillis() - nowtime;
+			DecimalFormat df = new DecimalFormat("0.00");
+			Out.info("Response checked file id complete: "+requestedHVFile.getFileid() + ", timed used: "+df.format(sendTime/1000));
+			hpc = new HTTPResponseProcessorFile(requestedHVFile);
+			session.getHTTPServer().getHentaiAtHomeClient().getCacheHandler().markRecentlyAccessed(requestedHVFile);
+		}
+		else if(Settings.isStaticRange(fileid)) {
+			// non-existent file. do an on-demand request of the file directly from the image servers
+			URL[] sources = session.getHTTPServer().getHentaiAtHomeClient().getServerHandler().getStaticRangeFetchURL(fileindex, xres, fileid);
+			
+			if(sources == null) {
+				Out.debug(session + " Sources was empty for fileindex=" + fileindex + " xres=" + xres + " fileid=" + fileid);
+				responseStatusCode = 404;
+			}
+			else {
+				// hpc will update responseStatusCode
+				hpc = new HTTPResponseProcessorProxy(session, fileid, sources);
+			}
+		}
+		else {
+			// file does not exist, and is not in one of the client's static ranges
+			Out.debug(session + " File is not in static ranges for fileindex=" + fileindex + " xres=" + xres + " fileid=" + fileid);
+			responseStatusCode = 404;
+		}
+		return fileid;		
+	}
+
+	public void parseRequest(String request, boolean localNetworkAccess) throws Exception {
 		if(request == null) {
 			Out.debug(session + " Client did not send a request.");
 			responseStatusCode = 400;
@@ -159,71 +232,24 @@ public class HTTPResponse {
 		if(urlparts[1].equals("h")) {
 			// form: /h/$fileid/$additional/$filename
 			
-			if(urlparts.length < 4) {
-				responseStatusCode = 400;
-				return;
-			}
-
-			String fileid = urlparts[2];
-			if(Stats.getOpenConnections()>20){
-				Out.info("Get file request, file id: "+fileid);
-			}
-			HVFile requestedHVFile = HVFile.getHVFileFromFileid(fileid);
-			Hashtable<String,String> additional = Tools.parseAdditional(urlparts[3]);
-			boolean keystampRejected = true;
+			long timeout = 20000;
+ 
+			// 创建一个新的CompletableFuture
+			CompletableFuture<Object> future = CompletableFuture.supplyAsync(() -> {
+				// 这里是要执行的方法
+				return proceesFileRequest(urlparts);
+			});
 
 			try {
-				String[] keystampParts = additional.get("keystamp").split("-");
-				
-				if(keystampParts.length == 2) {
-					int keystampTime = Integer.parseInt(keystampParts[0]);
-
-					if(Math.abs(Settings.getServerTime() - keystampTime) < 900) {
-						if( keystampParts[1].equalsIgnoreCase(Tools.getSHA1String(keystampTime + "-" + fileid + "-" + Settings.getClientKey() + "-hotlinkthis").substring(0, 10)) ) {
-							keystampRejected = false;
-						}
-					}
-				}
-			} catch(Exception e) {}
-			
-			String fileindex = additional.get("fileindex");
-			String xres = additional.get("xres");
-
-			long nowtime = System.currentTimeMillis();
-			Out.info("Started to checked file id complete: "+requestedHVFile.getFileid());
-			if(keystampRejected) {
-				responseStatusCode = 403;
+				Object result = future.get(timeout, TimeUnit.MILLISECONDS);
+			}catch(InterruptedException e){
+				throw new java.util.concurrent.TimeoutException("Check file exist timeout");
+			}catch(ExecutionException e){
+				throw new java.util.concurrent.TimeoutException("Check file exist timeout");
+			}catch(TimeoutException e){
+				throw new java.util.concurrent.TimeoutException("Check file exist timeout");
 			}
-			else if(requestedHVFile == null || fileindex == null || xres == null || !Pattern.matches("^\\d+$", fileindex) || !Pattern.matches("^org|\\d+$", xres)) {
-				Out.debug(session + " Invalid or missing arguments.");
-				responseStatusCode = 404;
-			}
-			else if(requestedHVFile.getLocalFileRef().exists()) {	
-				// hpc will update responseStatusCode
-				long sendTime = System.currentTimeMillis() - nowtime;
-				DecimalFormat df = new DecimalFormat("0.00");
-				Out.info("Response checked file id complete: "+requestedHVFile.getFileid() + ", timed used: "+df.format(sendTime/1000));
-				hpc = new HTTPResponseProcessorFile(requestedHVFile);
-				session.getHTTPServer().getHentaiAtHomeClient().getCacheHandler().markRecentlyAccessed(requestedHVFile);
-			}
-			else if(Settings.isStaticRange(fileid)) {
-				// non-existent file. do an on-demand request of the file directly from the image servers
-				URL[] sources = session.getHTTPServer().getHentaiAtHomeClient().getServerHandler().getStaticRangeFetchURL(fileindex, xres, fileid);
-				
-				if(sources == null) {
-					Out.debug(session + " Sources was empty for fileindex=" + fileindex + " xres=" + xres + " fileid=" + fileid);
-					responseStatusCode = 404;
-				}
-				else {
-					// hpc will update responseStatusCode
-					hpc = new HTTPResponseProcessorProxy(session, fileid, sources);
-				}
-			}
-			else {
-				// file does not exist, and is not in one of the client's static ranges
-				Out.debug(session + " File is not in static ranges for fileindex=" + fileindex + " xres=" + xres + " fileid=" + fileid);
-				responseStatusCode = 404;
-			}						
+					
 
 			return;
 		}
