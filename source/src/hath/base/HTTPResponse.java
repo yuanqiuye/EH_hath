@@ -232,11 +232,9 @@ public class HTTPResponse {
 		if(urlparts[1].equals("h")) {
 			// form: /h/$fileid/$additional/$filename
 			
-			long timeout = 20000;
+			long timeout = 8000;
  
-			// 创建一个新的CompletableFuture
 			CompletableFuture<Object> future = CompletableFuture.supplyAsync(() -> {
-				// 这里是要执行的方法
 				return proceesFileRequest(urlparts);
 			});
 
