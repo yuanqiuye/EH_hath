@@ -1,8 +1,6 @@
 FROM eclipse-temurin:20-jdk-jammy as build
 WORKDIR /source
 COPY ./source/ ./
-RUN apk --no-cache add findutils && \
-    rm -rf /var/cache/apk/*
 RUN chmod +x ./make.sh ./makejar.sh && ./make.sh && ./makejar.sh
 
 FROM openjdk:8-jre-alpine as app
