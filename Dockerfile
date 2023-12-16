@@ -1,9 +1,9 @@
-FROM eclipse-temurin:20-jdk-jammy as build
+FROM openjdk:8-jdk-alpine as build
 WORKDIR /source
 COPY ./source/ ./
 RUN chmod +x ./make.sh ./makejar.sh && ./make.sh && ./makejar.sh
 
-FROM eclipse-temurin:20-jre-jammy as app
+FROM openjdk:8-jre-alpine as app
 
 WORKDIR /hath
 COPY --from=build /source/build/HentaiAtHome.jar ./
