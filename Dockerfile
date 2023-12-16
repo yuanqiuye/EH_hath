@@ -1,4 +1,4 @@
-FROM openjdk:8-jdk-alpine as build
+FROM eclipse-temurin:20-jdk-jammy as build
 WORKDIR /source
 COPY ./source/ ./
 RUN apk --no-cache add findutils && \
