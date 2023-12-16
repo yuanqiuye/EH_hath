@@ -239,7 +239,7 @@ public class HTTPSession implements Runnable {
 		}
 		catch(Exception e) {
 			Out.info(info + "The connection was interrupted or closed by the remote host: " + e.toString());
-			Out.debug(e == null ? "(no exception)" : e.getMessage());
+			Out.info(e == null ? "(no exception)" : e.getMessage());
 			//e.printStackTrace();
 		}
 		finally {
