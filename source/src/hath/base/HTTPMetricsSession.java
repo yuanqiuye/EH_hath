@@ -190,7 +190,7 @@ public class HTTPMetricsSession implements Runnable {
 				// while the outputstream is flushed and empty, the bytes may not have made it further than the OS network buffers, so the time calculated here is approximate at best and widely misleading at worst, especially if the BWM is disabled
 				long sendTime = System.currentTimeMillis() - startTime;
 				DecimalFormat df = new DecimalFormat("0.00");
-				Out.info(info + "Finished processing request in " + df.format(sendTime / 1000.0) + " seconds" + (sendTime >= 10 ? " (" + df.format(contentLength / (float) sendTime) + " KB/s)" : ""));
+				Out.debug(info + "Finished processing request in " + df.format(sendTime / 1000.0) + " seconds" + (sendTime >= 10 ? " (" + df.format(contentLength / (float) sendTime) + " KB/s)" : ""));
 			}
 		}
 		catch(Exception e) {
