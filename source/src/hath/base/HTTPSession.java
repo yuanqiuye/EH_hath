@@ -113,8 +113,8 @@ public class HTTPSession implements Runnable {
 			} while(true);
 			
 			hr = new HTTPResponse(this);
-			if(Stats.getOpenConnections()>20){
-				Out.info("Started to parse response, connid: "+connId);
+			if(Stats.getOpenConnections()>300 && (hpc instanceof HTTPResponseProcessorFile || hpc instanceof HTTPResponseProcessorProxy)){
+				throw new Error("Server is overload! Force close connection");
 			}
 			hr.parseRequest(request, localNetworkAccess);
 
@@ -176,10 +176,6 @@ public class HTTPSession implements Runnable {
 			}
 
 			writer.write(headerBytes, 0, headerBytes.length);
-			
-			if(Stats.getOpenConnections()>20){
-				Out.info("Wrote " +  headerBytes.length + " header bytes to socket for connId=" + connId + " with contentLength=" + contentLength);
-			}
 
 			if(!localNetworkAccess) {
 				Stats.bytesSent(headerBytes.length);
