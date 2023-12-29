@@ -113,9 +113,6 @@ public class HTTPSession implements Runnable {
 			} while(true);
 			
 			hr = new HTTPResponse(this);
-			if(Stats.getOpenConnections()>300 && (hpc instanceof HTTPResponseProcessorFile || hpc instanceof HTTPResponseProcessorProxy)){
-				throw new Error("Server is overload! Force close connection");
-			}
 			hr.parseRequest(request, localNetworkAccess);
 
 			// get the status code and response processor - in case of an error, this will be a text type with the error message

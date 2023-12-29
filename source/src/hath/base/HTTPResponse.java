@@ -224,7 +224,11 @@ public class HTTPResponse {
 
 		if(urlparts[1].equals("h")) {
 			// form: /h/$fileid/$additional/$filename
-			
+			if(Stats.getOpenConnections()>280){
+				throw new Error("Server is overload! Force close connection");
+			}
+
+
 			long timeout = 8000;
  
 			CompletableFuture<Object> future = CompletableFuture.supplyAsync(() -> {
