@@ -113,8 +113,10 @@ public class HTTPResponse {
 
 			for(FileDownloader dler : testfiles) {
 				if(dler.waitAsyncDownload()) {
-					successfulTests += 1;
-					totalTimeMillis += dler.getDownloadTimeMillis();
+					if(dler.getContentLength() >= testsize) {
+						successfulTests += 1;
+						totalTimeMillis += dler.getDownloadTimeMillis();
+					}
 				}
 			}
 		}
@@ -168,7 +170,7 @@ public class HTTPResponse {
 			hpc = new HTTPResponseProcessorFile(requestedHVFile);
 			session.getHTTPServer().getHentaiAtHomeClient().getCacheHandler().markRecentlyAccessed(requestedHVFile);
 		}
-		else if(Settings.isStaticRange(fileid)) {
+		else {
 			// non-existent file. do an on-demand request of the file directly from the image servers
 			URL[] sources = session.getHTTPServer().getHentaiAtHomeClient().getServerHandler().getStaticRangeFetchURL(fileindex, xres, fileid);
 			
@@ -181,11 +183,7 @@ public class HTTPResponse {
 				hpc = new HTTPResponseProcessorProxy(session, fileid, sources);
 			}
 		}
-		else {
-			// file does not exist, and is not in one of the client's static ranges
-			Out.debug(session + " File is not in static ranges for fileindex=" + fileindex + " xres=" + xres + " fileid=" + fileid);
-			responseStatusCode = 404;
-		}
+		
 		return fileid;		
 	}
 

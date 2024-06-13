@@ -78,7 +78,7 @@ public class HTTPSession implements Runnable {
 	public void run() {
 		// why are we back to input/output streams? because java has no SSLSocketChannel, using them with SSLEngine is stupidly complex, and all the middleware libraries for SSL over channels are either broken, outdated, or require a major code rewrite
 		// may switch back to channels in the future if a decent library materializes, or I can be arsed to learn SSLEngine and implementing it does not require a major rewrite
-		BufferedReader reader = null;
+		HTTPStreamReader reader = null;
 		DataOutputStream writer = null;
 		HTTPResponseProcessor hpc = null;
 		String info = this.toString() + " ";
@@ -86,7 +86,7 @@ public class HTTPSession implements Runnable {
 		try {
 			socket.setSoTimeout(10000);
 			
-			reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+			reader = new HTTPStreamReaderReader(new InputStreamReader(socket.getInputStream()));
 			writer = new DataOutputStream(socket.getOutputStream());
 
 			// read the header and parse the request - this will also update the response code and initialize the proper response processor
@@ -101,7 +101,7 @@ public class HTTPSession implements Runnable {
 					rcvdBytes += read.length();
 
 					if(getheadPattern.matcher(read).matches()) {
-						request = read.substring(0, Math.min(1000, read.length()));
+						request = read;
 					}
 					else if(read.isEmpty()) {
 						break;
@@ -310,5 +310,56 @@ public class HTTPSession implements Runnable {
 	public String toString() {
 		return "{" + connId + String.format("%1$-17s", getSocketInetAddress().toString() + "}");
 	}
+	
+	private class HTTPStreamReader extends BufferedReader {
+		private final int maxLen = 1000, CR = 13, LF = 10;
 
+		public HTTPStreamReader(InputStreamReader reader) {
+			super(reader);
+		}
+
+		public String readLine() throws java.io.IOException {
+			char[] buffer = new char[maxLen];
+			int currentIndex = 0;
+			int currentChar = read();
+
+			while( (currentChar != CR) && (currentChar != LF) && (currentChar >= 0) && (currentIndex < maxLen) ) {
+				// not EOF or EOL; add to the buffer and keep reading
+				buffer[currentIndex++] = (char) currentChar;
+				currentChar = read();
+			}
+
+			if(currentChar < 0) {
+				// EOF; return the buffer, or null if no data has been read
+				return currentIndex > 0 ? new String(buffer, 0, currentIndex) : null;
+			}
+
+			if(currentChar == CR) {
+				// read one more char to check for LF, discard if so
+				mark(1);
+
+				if(read() != LF) {
+					reset();
+				}
+			}
+			else if(currentChar != LF) {
+				// we exited the loop without ending on a CR or LF, meaning we hit the maxLen limit; check if the next character is CR/LF and discard if so
+				mark(1);
+				currentChar = read();
+
+				if(currentChar == CR) {
+					mark(1);
+
+					if(read() != LF) {
+						reset();	
+					}
+				} 
+				else if(currentChar != LF) {
+					reset();
+				}
+			}
+
+			return new String(buffer, 0, currentIndex);
+		}
+	}
 }

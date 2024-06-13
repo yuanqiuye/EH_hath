@@ -207,7 +207,9 @@ public class HentaiAtHomeClient implements Runnable {
 			threadInterruptable = true;
 
 			try {
-				myThread.sleep(Math.max(1000, 10000 - lastThreadTime));
+				long sleeptime = Math.max(1000, Math.min(10000, 10000 - lastThreadTime));
+				Out.debug("Main thread sleeping with lastThreadTime=" + lastThreadTime + " sleeptime=" + sleeptime + ", memory total=" + runtime.totalMemory() / 1024 + "KiB free=" + runtime.freeMemory() / 1024 + "KiB max=" + runtime.maxMemory() / 1024 + "KiB");
+				myThread.sleep(sleeptime);
 			}
 			catch(java.lang.InterruptedException e) {
 				Out.debug("Master thread sleep interrupted");
@@ -219,6 +221,7 @@ public class HentaiAtHomeClient implements Runnable {
 			long startTime = System.currentTimeMillis();
 
 			if(!shutdown && suspendedUntil < System.currentTimeMillis()) {
+				Out.debug("Main thread starting cycle at startTime=" + startTime);
 				Stats.setProgramStatus("Running");
 
 				if(suspendedUntil > 0) {
@@ -300,9 +303,10 @@ public class HentaiAtHomeClient implements Runnable {
 				}
 
 				System.gc();
-				Out.debug("Memory total=" + runtime.totalMemory() / 1024 + "kB free=" + runtime.freeMemory() / 1024 + "kB max=" + runtime.maxMemory() / 1024 + "kB");
 
 				++threadSkipCounter;
+			}else {
+				Out.debug("Main thread is inactive (suspendedUntil=" + suspendedUntil + " shutdown=" + shutdown + ")");
 			}
 
 			lastThreadTime = System.currentTimeMillis() - startTime;

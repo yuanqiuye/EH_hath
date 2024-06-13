@@ -74,7 +74,7 @@ public class HTTPServer implements Runnable {
 			Out.info("Requesting certificate from server...");
 			File certFile = new File(Settings.getDataDir(), "hathcert.p12");
 			URL certUrl = ServerHandler.getServerConnectionURL(ServerHandler.ACT_GET_CERTIFICATE);
-			FileDownloader certdl = new FileDownloader(certUrl, 10000, 300000, certFile.toPath());
+			FileDownloader certdl = new FileDownloader(certUrl, 10000, 300000, certFile.toPath(), false);
 			certdl.downloadFile();
 
 			if(!certFile.exists()) {
@@ -113,7 +113,7 @@ public class HTTPServer implements Runnable {
 			Out.info("Starting up the internal HTTP Server...");
 			SSLServerSocketFactory ssf = sslContext.getServerSocketFactory();
 			listener = (SSLServerSocket) ssf.createServerSocket(port);
-			listener.setEnabledProtocols(new String[]{"SSLv3","TLSv1","TLSv1.1","TLSv1.2"});
+			listener.setEnabledProtocols(new String[]{"TLSv1","TLSv1.1","TLSv1.2"});
 
 			Out.debug("Initialized SSLContext with cert " + certFile + " and protocol " + sslContext.getProtocol());
 			Out.debug("Supported ciphers: " + Arrays.toString(sslContext.getSupportedSSLParameters().getCipherSuites()));

@@ -27,6 +27,7 @@ import java.lang.Thread;
 import java.util.Arrays;
 import java.net.URL;
 import java.net.URLConnection;
+import java.net.Proxy;
 import java.io.File;
 import java.io.RandomAccessFile;
 import java.io.InputStream;
@@ -73,7 +74,14 @@ public class ProxyFileDownloader implements Runnable {
 			try {
 				Out.debug("ProxyFileDownloader: Requesting file download from " + source);
 				
-				connection = source.openConnection();
+				Proxy proxy = Settings.getImageProxy();
+
+				if(proxy != null) {
+					connection = source.openConnection(proxy);
+				}
+				else {
+					connection = source.openConnection();
+				}
 				connection.setConnectTimeout(5000);
 				connection.setReadTimeout(30000);
 				connection.setRequestProperty("Hath-Request", Settings.getClientID() + "-" + Tools.getSHA1String(Settings.getClientKey() + fileid));
@@ -275,26 +283,19 @@ public class ProxyFileDownloader implements Runnable {
 		}
 
 		if(tempFile.length() != getContentLength()) {
-			Out.debug("Requested file " + fileid + " is incomplete, and will not be stored. (bytes=" + tempFile.length() + ")");
+			Out.debug("Proxy-downloaded file " + fileid + " is incomplete, and will not be stored. (bytes=" + tempFile.length() + ")");
 		}
 		else {
 			String sha1Hash = Tools.binaryToHex(sha1Digest.digest());
 
 			if( !requestedHVFile.getHash().equals(sha1Hash) ) {
-				Out.debug("Requested file " + fileid + " is corrupt, and will not be stored. (digest=" + sha1Hash + ")");
+				Out.debug("Proxy-downloaded file " + fileid + " is corrupt, and will not be stored. (digest=" + sha1Hash + ")");
 			}
-			else if( !Settings.isStaticRange(fileid) ) {
-				Out.debug("The file " + fileid + " is not in a static range, and will not be stored.");
+			else if( client.getCacheHandler().importFile(tempFile, requestedHVFile) ) {
+				Out.debug("Proxy-downloaded file " + fileid + " was successfully stored in cache.");
 			}
 			else {
-				if(client.getCacheHandler().importFile(tempFile, requestedHVFile)) {
-					Out.debug("Requested file " + fileid + " was successfully stored in cache.");
-				}
-				else {
-					Out.debug("Requested file " + fileid + " exists or cannot be cached.");
-				}
-
-				Out.debug("Proxy file download request complete for " + fileid);
+				Out.debug("Proxy-downloaded file " + fileid + " exists or could not be imported to the cache.");
 			}
 		}
 

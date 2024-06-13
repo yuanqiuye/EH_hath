@@ -308,8 +308,8 @@ public class ServerHandler {
 		return null;
 	}
 
-	public URL getDownloaderFetchURL(int gid, int page, int fileindex, String xres, boolean forceImageServer) {
-		URL requestURL = getServerConnectionURL(ACT_DOWNLOADER_FETCH, gid + ";" + page + ";" + fileindex + ";" + xres + ";" + (forceImageServer ? 1 : 0));
+	public URL getDownloaderFetchURL(int gid, int page, int fileindex, String xres, int fileretry) {
+		URL requestURL = getServerConnectionURL(ACT_DOWNLOADER_FETCH, gid + ";" + page + ";" + fileindex + ";" + xres + ";" + fileretry);
 		ServerResponse sr = ServerResponse.getServerResponse(requestURL, this);
 
 		if(sr.getResponseStatus() == ServerResponse.RESPONSE_STATUS_NULL) {

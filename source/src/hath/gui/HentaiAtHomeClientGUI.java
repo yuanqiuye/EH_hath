@@ -243,11 +243,19 @@ public class HentaiAtHomeClientGUI extends JFrame implements HathGUI, ActionList
 	public void windowClosed(WindowEvent e) {}
 
 	public void windowClosing(WindowEvent e) {
-		setVisible(false);
-		
-		if(trayFirstMinimize) {
-			trayFirstMinimize = false;
-			trayIcon.displayMessage("Hentai@Home is still running", "Click here when you wish to show the Hentai@Home Client", TrayIcon.MessageType.INFO);
+		if(isVisible()) {
+			setVisible(false);
+
+			if(trayFirstMinimize) {
+				trayFirstMinimize = false;
+				trayIcon.displayMessage("Hentai@Home is still running", "Click here when you wish to show the Hentai@Home Client", TrayIcon.MessageType.INFO);
+			}
+		}
+		else if(client != null) {
+			new GUIThreaded(client, GUIThreaded.ACTION_SHUTDOWN);
+		}
+		else {
+			System.exit(0);
 		}
 	}
 

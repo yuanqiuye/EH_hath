@@ -24,7 +24,7 @@ along with Hentai@Home.  If not, see <http://www.gnu.org/licenses/>.
 package hath.base;
 
 import java.io.File;
-import java.net.InetAddress;
+import java.net.*;
 import java.util.*;
 import java.lang.*;
 
@@ -32,13 +32,13 @@ public class Settings {
 	public static final String NEWLINE = System.getProperty("line.separator");
 
 	// the client build is among other things used by the server to determine the client's capabilities. any forks should use the build number as an indication of compatibility with mainline, rather than an internal build number.
-	public static final int CLIENT_BUILD = 160;
+	public static final int CLIENT_BUILD = 169;
 	public static final int CLIENT_KEY_LENGTH = 20;
 	public static final int MAX_KEY_TIME_DRIFT = 300;
 	public static final int MAX_CONNECTION_BASE = 20;
 	public static final int TCP_PACKET_SIZE = 1460;
 
-	public static final String CLIENT_VERSION = "1.6.2";
+	public static final String CLIENT_VERSION = "1.6.3";
 	public static final String CLIENT_RPC_PROTOCOL = "http://";
 	public static final String CLIENT_RPC_HOST = "rpc.hentaiathome.net";
 	public static final String CLIENT_LOGIN_FILENAME = "client_login";
@@ -46,15 +46,16 @@ public class Settings {
 
 	private static HentaiAtHomeClient activeClient = null;
 	private static HathGUI activeGUI = null;
+	private static Proxy imageProxy = null;
 	private static Object rpcServerLock = new Object();
 	private static InetAddress rpcServers[] = null;
-	private static String rpcServerCurrent = null, rpcServerLastFailed = null;
+	private static String rpcServerCurrent = null, rpcServerLastFailed = null, imageProxyType = null, imageProxyHost = null;
 	private static Hashtable<String, Integer> staticRanges = null;
 	private static File datadir = null, logdir = null, cachedir = null, tempdir = null, downloaddir = null;
 	private static InetAddress metricsListenAddress = null;
 	private static String clientKey = "", clientHost = "", metricsClientName = "", metricsUserId = "", dataDirPath = "data", logDirPath = "log", cacheDirPath = "cache", tempDirPath = "tmp", downloadDirPath = "download", rpcPath = "15/rpc?";
 
-	private static int clientID = 0, clientPort = 0, throttle_bytes = 0, overrideConns = 0, serverTimeDelta = 0, maxAllowedFileSize = 1073741824, currentStaticRangeCount = 0, metricsPort = 9100;
+	private static int clientID = 0, clientPort = 0, throttle_bytes = 0, overrideConns = 0, serverTimeDelta = 0, maxAllowedFileSize = 1073741824, currentStaticRangeCount = 0, metricsPort = 9100, maxFilenameLength = 125, imageProxyPort = 0;
 	private static long disklimit_bytes = 0, diskremaining_bytes = 0, fileSystemBlocksize = 4096;
 	private static boolean verifyCache = false, rescanCache = false, skipFreeSpaceCheck = false, warnNewClient = false, useLessMemory = false, disableBWM = false, disableDownloadBWM = false, disableLogs = false, flushLogs = false, disableIPOriginCheck = false, disableFloodControl = false, enableMetrics = false;
 
@@ -202,13 +203,26 @@ public class Settings {
 			else if(setting.equals("rpc_server_ip")) {
 				synchronized(rpcServerLock) {
 					String[] split = value.split(";");
-					rpcServers = new java.net.InetAddress[split.length];
+					rpcServers = new InetAddress[split.length];
 					int i = 0;
+					boolean keepCurrent = false;
 					for(String s : split) {
-						rpcServers[i++] = java.net.InetAddress.getByName(s);
+						InetAddress rpcServer = InetAddress.getByName(s);
+						rpcServers[i++] = rpcServer;
+
+						if(rpcServerCurrent != null) {
+							if(rpcServerCurrent.equals(rpcServer.getHostAddress().toLowerCase())) {
+								keepCurrent = true;
+							}
+						}
 					}
-					
-					rpcServerCurrent = null;
+
+					if(keepCurrent) {
+						Out.debug("Keeping current rpcServerCurrent=" + rpcServerCurrent);
+					}
+					else {
+						rpcServerCurrent = null;
+					}
 				}
 			}
 			else if(setting.equals("rpc_path")) {
@@ -283,6 +297,9 @@ public class Settings {
 			else if(setting.equals("max_allowed_filesize")) {
 				maxAllowedFileSize = Integer.parseInt(value);
 			}
+			else if(setting.equals("max_filename_length")) {
+				maxFilenameLength = Integer.parseInt(value);
+			}
 			else if(setting.equals("static_ranges")) {
 				staticRanges = new Hashtable<String,Integer>((int) (value.length() * 0.3));
 				currentStaticRangeCount = 0;
@@ -308,6 +325,15 @@ public class Settings {
 			}
 			else if(setting.equals("download_dir")) {
 				downloadDirPath = value;
+			}
+			else if(setting.equals("image_proxy_type")) {
+				imageProxyType = value.toLowerCase();
+			}
+			else if(setting.equals("image_proxy_host")) {
+				imageProxyHost = value.toLowerCase();
+			}
+			else if(setting.equals("image_proxy_port")) {
+				imageProxyPort = Integer.parseInt(value);
 			}
 			else if(setting.equals("flush_logs")) {
 				flushLogs = value.equals("true");
@@ -437,6 +463,10 @@ public class Settings {
 		return fileSystemBlocksize;
 	}
 
+	public static int getMaxFilenameLength() {
+		return maxFilenameLength;
+	}
+
 	public static int getServerTime() {
 		return (int) (System.currentTimeMillis() / 1000) + serverTimeDelta;
 	}
@@ -495,6 +525,62 @@ public class Settings {
 
 	public static boolean isDisableFloodControl() {
 		return disableFloodControl;
+	}
+
+	public static boolean isImageProxyEnabled() {
+		return imageProxyHost != null;
+	}
+
+	public static String getImageProxyHost() {
+		return imageProxyHost;
+	}
+
+	public static String getImageProxyType() {
+		if(imageProxyType == null) {
+			return "socks";
+		}
+
+		return imageProxyType;
+	}
+
+	public static int getImageProxyPort() {
+		if(imageProxyPort == 0) {
+			if(getImageProxyType().equals("socks")) {
+				return 1080;
+			}
+
+			if(getImageProxyType().equals("http")) {
+				return 8080;
+			}
+		}
+
+		return imageProxyPort;
+	}
+
+	public static Proxy getImageProxy() {
+		if(!isImageProxyEnabled()) {
+			return null;
+		}
+
+		if(imageProxy == null) {
+			Proxy.Type proxyType = Proxy.Type.DIRECT;
+
+			switch(getImageProxyType()) {
+				case "socks":
+					proxyType = Proxy.Type.SOCKS;
+				break;
+
+				case "http":
+					proxyType = Proxy.Type.HTTP;
+				break;
+			}
+
+			imageProxy = new Proxy(proxyType, new InetSocketAddress(getImageProxyHost(), getImageProxyPort()));
+
+			Out.debug("Initialized image proxy " + imageProxy);
+		}
+
+		return imageProxy;
 	}
 
 	public static HentaiAtHomeClient getActiveClient() {
