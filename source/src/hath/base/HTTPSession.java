@@ -86,7 +86,7 @@ public class HTTPSession implements Runnable {
 		try {
 			socket.setSoTimeout(10000);
 			
-			reader = new HTTPStreamReaderReader(new InputStreamReader(socket.getInputStream()));
+			reader = new HTTPStreamReader(new InputStreamReader(socket.getInputStream()));
 			writer = new DataOutputStream(socket.getOutputStream());
 
 			// read the header and parse the request - this will also update the response code and initialize the proper response processor
@@ -310,7 +310,7 @@ public class HTTPSession implements Runnable {
 	public String toString() {
 		return "{" + connId + String.format("%1$-17s", getSocketInetAddress().toString() + "}");
 	}
-	
+
 	private class HTTPStreamReader extends BufferedReader {
 		private final int maxLen = 1000, CR = 13, LF = 10;
 
