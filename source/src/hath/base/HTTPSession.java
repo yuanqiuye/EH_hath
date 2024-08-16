@@ -165,8 +165,13 @@ public class HTTPSession implements Runnable {
 					Out.info(e.getMessage());
 				}
 			}
-
-			HTTPBandwidthMonitor bwm = httpServer.getBandwidthMonitor();
+			
+			HTTPBandwidthMonitor bwm = null;
+			if(hpc instanceof HTTPResponseProcessorSpeedtest){
+				bwm = httpServer.getSpeedTestBandwidthMonitor();
+			}else{
+				bwm = httpServer.getBandwidthMonitor();
+			}
 
 			if(bwm != null && !localNetworkAccess) {
 				bwm.waitForQuota(myThread, headerBytes.length);

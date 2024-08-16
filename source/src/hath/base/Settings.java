@@ -55,7 +55,7 @@ public class Settings {
 	private static InetAddress metricsListenAddress = null;
 	private static String clientKey = "", clientHost = "", metricsClientName = "", metricsUserId = "", dataDirPath = "data", logDirPath = "log", cacheDirPath = "cache", tempDirPath = "tmp", downloadDirPath = "download", rpcPath = "15/rpc?";
 
-	private static int clientID = 0, clientPort = 0, throttle_bytes = 0, overrideConns = 0, serverTimeDelta = 0, maxAllowedFileSize = 1073741824, currentStaticRangeCount = 0, metricsPort = 9100, maxFilenameLength = 125, imageProxyPort = 0;
+	private static int clientID = 0, clientPort = 0, throttle_bytes = 0, uploadThrottle_bytes = 0, speedtestThrottle_bytes = 0, overrideConns = 0, serverTimeDelta = 0, maxAllowedFileSize = 1073741824, currentStaticRangeCount = 0, metricsPort = 9100, maxFilenameLength = 125, imageProxyPort = 0;
 	private static long disklimit_bytes = 0, diskremaining_bytes = 0, fileSystemBlocksize = 4096;
 	private static boolean verifyCache = false, rescanCache = false, skipFreeSpaceCheck = false, warnNewClient = false, useLessMemory = false, disableBWM = false, disableDownloadBWM = false, disableLogs = false, flushLogs = false, disableIPOriginCheck = false, disableFloodControl = false, enableMetrics = false;
 
@@ -239,6 +239,12 @@ public class Settings {
 			else if(setting.equals("throttle_bytes")) {
 				// THIS SHOULD NOT BE ALTERED BY THE CLIENT AFTER STARTUP. Using the website interface will update the throttle value for the dispatcher first, and update the client on the first stillAlive test.
 				throttle_bytes = Integer.parseInt(value);
+			}
+			else if(setting.equals("upload_throttle_bytes")){
+				uploadThrottle_bytes = Integer.parseInt(value);
+			}
+			else if(setting.equals("speedtest_throttle_bytes")){
+				speedtestThrottle_bytes = Integer.parseInt(value);
 			}
 			else if(setting.equals("disklimit_bytes")) {
 				long newLimit = Long.parseLong(value);
@@ -444,7 +450,11 @@ public class Settings {
 	}
 
 	public static int getThrottleBytesPerSec() {
-		return throttle_bytes;
+		return uploadThrottle_bytes;
+	}
+
+	public static int getSpeedTestThrottleBytesPerSec() {
+		return speedtestThrottle_bytes;
 	}
 
 	public static int getMaxAllowedFileSize() {

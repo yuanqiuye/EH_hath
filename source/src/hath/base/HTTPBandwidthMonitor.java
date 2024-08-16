@@ -31,8 +31,8 @@ public class HTTPBandwidthMonitor {
 	private int millisPerTick, bytesPerTick;
 	private int[] tickBytes, tickSeconds;
 
-	public HTTPBandwidthMonitor() {
-		bytesPerTick = (int) Math.ceil(Settings.getThrottleBytesPerSec() / TIME_RESOLUTION);
+	public HTTPBandwidthMonitor(boolean isSpeedTest) {
+		bytesPerTick = (int) Math.ceil((isSpeedTest ? Settings.getSpeedTestThrottleBytesPerSec() : Settings.getThrottleBytesPerSec())/ TIME_RESOLUTION);
 		millisPerTick = (int) (1000 / TIME_RESOLUTION);
 		tickBytes = new int[TIME_RESOLUTION];
 		tickSeconds = new int[TIME_RESOLUTION];

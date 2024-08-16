@@ -49,7 +49,7 @@ public class GalleryDownloader implements Runnable {
 	public GalleryDownloader(HentaiAtHomeClient client) {
 		this.client = client;
 		validator = new FileValidator();
-		downloadLimiter = Settings.isDisableDownloadBWM() ? null : new HTTPBandwidthMonitor();
+		downloadLimiter = Settings.isDisableDownloadBWM() ? null : new HTTPBandwidthMonitor(false);
 		myThread = new Thread(this);
 		myThread.start();
 		myThread.setName("GalleryDownloader");

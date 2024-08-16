@@ -43,7 +43,7 @@ import javax.net.ssl.TrustManagerFactory;
 
 public class HTTPServer implements Runnable {
 	private HentaiAtHomeClient client;
-	private HTTPBandwidthMonitor bandwidthMonitor = null;
+	private HTTPBandwidthMonitor bandwidthMonitor = null, speedtestbandwidthMonitor = null;
 	private SSLServerSocket listener = null;
 	private SSLContext sslContext = null;
 	private Thread myThread = null;
@@ -60,7 +60,8 @@ public class HTTPServer implements Runnable {
 		floodControlTable = new Hashtable<String,FloodControlEntry>();
 		
 		if(!Settings.isDisableBWM()) {
-			bandwidthMonitor = new HTTPBandwidthMonitor();
+			bandwidthMonitor = new HTTPBandwidthMonitor(false);
+			speedtestbandwidthMonitor = new HTTPBandwidthMonitor(true);
 		}
 		
 		//  private network: localhost, 127.x.y.z, 10.0.0.0 - 10.255.255.255, 172.16.0.0 - 172.31.255.255,  192.168.0.0 - 192.168.255.255, 169.254.0.0 -169.254.255.255
@@ -325,6 +326,10 @@ public class HTTPServer implements Runnable {
 
 	public HTTPBandwidthMonitor getBandwidthMonitor() {
 		return bandwidthMonitor;
+	}
+
+	public HTTPBandwidthMonitor getSpeedTestBandwidthMonitor() {
+		return speedtestbandwidthMonitor;
 	}
 
 	public HentaiAtHomeClient getHentaiAtHomeClient() {
