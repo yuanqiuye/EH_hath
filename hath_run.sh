@@ -18,4 +18,7 @@ exec java -jar ./HentaiAtHome.jar         \
     --metrics-user=$METRICS_USER_ID       \
     --metrics-address=0.0.0.0             \
     --metrics-port=9500                   \
-    --enable-metrics=true
+    --enable-metrics=true                 \
+    --upload-throttle-bytes=$UPLOAD_THROTTLE_BYTES \
+    --speedtest-throttle-bytes=$SPEEDTEST_THROTTLE_BYTES \
+

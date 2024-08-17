@@ -152,6 +152,10 @@ public class HentaiAtHomeClient implements Runnable {
 
 		httpMetricsServer = new HTTPMetricsServer(this);
 
+		if (Settings.isEnableMetrics()){
+			Out.info("Startig metric server...");
+		}
+
 		if (Settings.isEnableMetrics() && !httpMetricsServer.startConnectionListener(Settings.getMetricsPort(), Settings.getMetricsAddress())) {
 			Out.warning("Failed to initialize HTTPMetricsServer. Continuing without metrics enabled.");
 		}
