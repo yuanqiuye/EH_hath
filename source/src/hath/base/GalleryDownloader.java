@@ -136,13 +136,16 @@ public class GalleryDownloader implements Runnable {
 	private void finalizeGalleryDownload(boolean success) {
 		pendingDownload = false;
 		markDownloaded = true;
-
-		if(success) {
+	
+		if (success) {
 			Out.info("GalleryDownloader: Finished download of gallery: " + title);
-
+	
 			try {
 				Tools.putStringFileContents(new File(todir, "galleryinfo.txt"), information, "UTF8");
-				zipFolder(todir.toPath(), new File(todir.getParentFile(), todir.getName() + ".zip").toPath());
+				Path tempZipPath = new File(todir.getParentFile(), todir.getName() + ".zip.tmp").toPath();
+				
+				zipFolder(todir.toPath(), tempZipPath);
+				Files.move(tempZipPath, tempZipPath.resolveSibling(todir.getName() + ".zip"), StandardCopyOption.REPLACE_EXISTING);
 				deleteDirectory(todir.toPath());
 	
 				Out.info("GalleryDownloader: Successfully zipped and deleted the original folder: " + todir.getName());
@@ -150,11 +153,11 @@ public class GalleryDownloader implements Runnable {
 				Out.warning("GalleryDownloader: Could not complete zipping or deleting the folder");
 				e.printStackTrace();
 			}
-		}
-		else {
+		} else {
 			Out.warning("GalleryDownloader: Permanently failed downloading gallery: " + title);
 		}
 	}
+
 	private void zipFolder(Path sourceFolderPath, Path zipPath) throws IOException {
 		try (ZipOutputStream zs = new ZipOutputStream(Files.newOutputStream(zipPath))) {
 			Files.walk(sourceFolderPath).filter(path -> !Files.isDirectory(path)).forEach(path -> {
