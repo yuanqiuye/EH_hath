@@ -31,6 +31,10 @@ import java.util.List;
 import java.util.regex.Pattern;
 import java.io.File;
 import java.net.URL;
+import java.nio.file.*;
+import java.util.zip.*;
+import java.io.IOException;
+import java.util.Comparator;
 
 public class GalleryDownloader implements Runnable {
 	protected HentaiAtHomeClient client;
@@ -138,15 +142,41 @@ public class GalleryDownloader implements Runnable {
 
 			try {
 				Tools.putStringFileContents(new File(todir, "galleryinfo.txt"), information, "UTF8");
-			}
-			catch(java.io.IOException e) {
-				Out.warning("GalleryDownloader: Could not write galleryinfo file");
+				zipFolder(todir.toPath(), new File(todir.getParentFile(), todir.getName() + ".zip").toPath());
+				deleteDirectory(todir.toPath());
+	
+				Out.info("GalleryDownloader: Successfully zipped and deleted the original folder: " + todir.getName());
+			} catch (Exception e) {
+				Out.warning("GalleryDownloader: Could not complete zipping or deleting the folder");
 				e.printStackTrace();
 			}
 		}
 		else {
 			Out.warning("GalleryDownloader: Permanently failed downloading gallery: " + title);
 		}
+	}
+	private void zipFolder(Path sourceFolderPath, Path zipPath) throws IOException {
+		try (ZipOutputStream zs = new ZipOutputStream(Files.newOutputStream(zipPath))) {
+			Files.walk(sourceFolderPath).filter(path -> !Files.isDirectory(path)).forEach(path -> {
+				ZipEntry zipEntry = new ZipEntry(sourceFolderPath.relativize(path).toString());
+				try {
+					zs.putNextEntry(zipEntry);
+					Files.copy(path, zs);
+					zs.closeEntry();
+				} catch (IOException e) {
+					Out.warning("GalleryDownloader: Failed to add file to zip: " + path.toString());
+					e.printStackTrace();
+				}
+			});
+		}
+	}
+	
+	// Method to delete a directory recursively
+	private void deleteDirectory(Path path) throws IOException {
+		Files.walk(path)
+			.sorted(Comparator.reverseOrder())
+			.map(Path::toFile)
+			.forEach(File::delete);
 	}
 
 	private boolean initializeNewGalleryMeta() {
