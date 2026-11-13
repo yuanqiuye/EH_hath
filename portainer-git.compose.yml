@@ -1,0 +1,39 @@
+services:
+  h_at_h_metric:
+    image: hath-metric:local
+    stop_grace_period: 60s
+    build:
+      args:
+        HATH_REF: ${HATH_GIT_REF:-master}
+      dockerfile_inline: |
+        FROM eclipse-temurin:21-jdk-jammy AS build
+        RUN apt-get update && apt-get install -y --no-install-recommends git && rm -rf /var/lib/apt/lists/*
+        ARG HATH_REF=master
+        WORKDIR /repo
+        RUN git init . && git remote add origin https://github.com/yuanqiuye/EH_hath.git && git fetch --depth=1 origin "$$HATH_REF" && git checkout --detach FETCH_HEAD && cd source && chmod +x ./make.sh ./makejar.sh && ./make.sh && ./makejar.sh
+        FROM eclipse-temurin:21-jre-jammy AS app
+        LABEL org.opencontainers.image.version="1.6.6" org.opencontainers.image.source="https://github.com/yuanqiuye/EH_hath"
+        WORKDIR /hath
+        COPY --from=build /repo/source/build/HentaiAtHome.jar ./
+        COPY --from=build /repo/hath_run.sh ./
+        RUN chmod 755 ./hath_run.sh
+        VOLUME ["/hath/cache", "/hath/data", "/hath/download", "/hath/log", "/hath/tmp"]
+        CMD ["/hath/hath_run.sh"]
+    ports:
+      - "${HATH_PORT:-8080}:${HATH_PORT:-8080}"
+      - "${METRICS_PORT:-9500}:9500"
+    volumes:
+      - ./data/data:/hath/data
+      - ./data/download:/hath/download
+      - ./data/cache:/hath/cache
+      - ./data/log:/hath/log
+      - ./data/tmp:/hath/tmp
+    restart: unless-stopped
+    environment:
+      - HATH_CLIENT_ID=${HATH_CLIENT_ID}
+      - HATH_CLIENT_KEY=${HATH_CLIENT_KEY}
+      - METRICS_CLIENT_NAME=${METRICS_CLIENT_NAME:-client}
+      - METRICS_USER_ID=${METRICS_USER_ID:-}
+      - UPLOAD_THROTTLE_BYTES=${UPLOAD_THROTTLE_BYTES:-0}
+      - SPEEDTEST_THROTTLE_BYTES=${SPEEDTEST_THROTTLE_BYTES:-0}
+      - HATH_PORT=${HATH_PORT:-8080}

@@ -1,6 +1,6 @@
 /*
 
-Copyright 2008-2023 E-Hentai.org
+Copyright 2008-2026 E-Hentai.org
 https://forums.e-hentai.org/
 tenboro@e-hentai.org
 
@@ -17,7 +17,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Hentai@Home.  If not, see <http://www.gnu.org/licenses/>.
+along with Hentai@Home.  If not, see <https://www.gnu.org/licenses/>.
 
 */
 
@@ -62,12 +62,7 @@ public class ServerHandler {
 		URL serverConnectionURL = null;
 
 		try {
-			if(act.equals(ACT_SERVER_STAT)) {
-				serverConnectionURL = new URL(Settings.CLIENT_RPC_PROTOCOL + Settings.getRPCServerHost() + "/" + Settings.getRPCPath() + "clientbuild=" + Settings.CLIENT_BUILD + "&act=" + act);
-			}
-			else {
-				serverConnectionURL = new URL(Settings.CLIENT_RPC_PROTOCOL + Settings.getRPCServerHost() + "/" + Settings.getRPCPath() + getURLQueryString(act, add));
-			}
+			serverConnectionURL = new URL(Settings.CLIENT_RPC_PROTOCOL + Settings.getRPCServerHost() + "/" + Settings.getRPCPath() + getURLQueryString(act, add));
 		} catch(java.net.MalformedURLException e) {
 			HentaiAtHomeClient.dieWithError(e);
 		}
@@ -138,7 +133,7 @@ public class ServerHandler {
 		}
 
 		if(sr.getResponseStatus() == ServerResponse.RESPONSE_STATUS_OK) {
-			Out.info("Start notification successful. Note that there may be a short wait before the server registers this client on the network.");
+			Out.info("Start notification successful. There may be a short wait before the server registers this client on the network.");
 			Stats.serverContact();
 			return true;
 		}
@@ -151,12 +146,15 @@ public class ServerHandler {
 			if(failcode.startsWith("FAIL_CONNECT_TEST")) {
 				Out.info("");
 				Out.info("************************************************************************************************************************************");
-				Out.info("The client has failed the external connection test.");
-				Out.info("The server failed to verify that this client is online and available from the Internet.");
-				Out.info("If you are behind a firewall, please check that port " + Settings.getClientPort() + " is forwarded to this computer.");
-				Out.info("You might also want to check that " + Settings.getClientHost() + " is your actual public IP address.");
-				Out.info("If you need assistance with forwarding a port to this client, locate a guide for your particular router at http://portforward.com/");
-				Out.info("The client will remain running so you can run port connection tests.");
+				Out.info("The client has failed the external connectivity test.");
+				Out.info("The server could not connect to the client, which usually means it is not publicly reachable from the internet.");
+				Out.info("If you are behind a NAT and/or firewall, check that port " + Settings.getClientPort() + " is open and forwarded to this computer.");
+				Out.info("If you need assistance with forwarding a port to this client, locate a guide for your particular router at https://portforward.com/");
+				Out.info("You may also want to check that " + Settings.getClientHost().replace("::ffff:", "") + " matches your public IPv4 address.");
+				Out.info("Your outgoing and incoming IP address must be the same; the address above is your current outgoing IP as seen by the server.");
+				Out.info("If your setup is using a non-transparent proxy, you may be able to fix this by starting the client with --disable-ip-origin-check");
+				Out.info("This is mostly applicable if you are seeing 'Rejecting connection request during startup' errors referencing a local network IP.");
+				Out.info("The client will remain running so you can diagnose firewall and port forwarding issues.");
 				Out.info("Use Program -> Exit in windowed mode or hit Ctrl+C in console mode to exit the program.");
 				Out.info("************************************************************************************************************************************");
 				Out.info("");
@@ -167,7 +165,7 @@ public class ServerHandler {
 				Out.info("");
 				Out.info("************************************************************************************************************************************");
 				Out.info("The server detected that another client was already connected from this computer or local network.");
-				Out.info("You can only have one client running per public IP address.");
+				Out.info("You can only have one client running per public IPv4 address.");
 				Out.info("The program will now terminate.");
 				Out.info("************************************************************************************************************************************");
 				Out.info("");
@@ -177,8 +175,9 @@ public class ServerHandler {
 			else if(failcode.startsWith("FAIL_CID_IN_USE")) {
 				Out.info("");
 				Out.info("************************************************************************************************************************************");
-				Out.info("The server detected that another client is already using this client ident.");
-				Out.info("If you want to run more than one client, you have to apply for additional idents.");
+				Out.info("The server detected that another client is already using this Client ID.");
+				Out.info("If the client was not shut down properly and your IP changed, you may have to wait up to 24 hours for the old session to time out.");
+				Out.info("If you want to run more than one client, you have to apply for additional Client IDs.");
 				Out.info("The program will now terminate.");
 				Out.info("************************************************************************************************************************************");
 				Out.info("");
@@ -216,9 +215,19 @@ public class ServerHandler {
 		Out.info("Connecting to the Hentai@Home Server to register client with ID " + Settings.getClientID() + "...");
 
 		try {
+			boolean failedInitial = false;
+			
 			do {
 				if(!refreshServerStat()) {
-					HentaiAtHomeClient.dieWithError("Failed to get initial stat from server.");
+					if(failedInitial) {
+						HentaiAtHomeClient.dieWithError("Failed to get initial stats from server.");
+					}
+					else {
+						failedInitial = true;
+						Out.warning("\nAuthentication failed; please re-enter your Client ID and Key");
+						Settings.promptForIDAndKey(client.getInputQueryHandler());
+						continue;
+					}
 				}
 
 				Out.info("Reading Hentai@Home client settings from server...");
@@ -233,8 +242,30 @@ public class ServerHandler {
 				else if(sr.getResponseStatus() == ServerResponse.RESPONSE_STATUS_NULL) {
 					HentaiAtHomeClient.dieWithError("Failed to get a login response from server.");
 				}
+				else if(sr.getFailCode().startsWith("FAIL_STARTUP_LOOP")) {
+					Out.info("");
+					Out.info("************************************************************************************************************************************");
+					Out.info("The server detected that the client is stuck in a startup loop, and has blocked it for 15 minutes.");
+					Out.info("Fix whatever is preventing the client from starting, and try again in a bit.");
+					Out.info("The program will now terminate.");
+					Out.info("************************************************************************************************************************************");
+					Out.info("");
+
+					client.dieWithError("The client has failed too many recent startup attempts; wait 15 minutes and try again.");
+				}
+				else if(sr.getFailCode().startsWith("FAIL_UNSUPPORTED_LOCATION")) {
+					Out.info("");
+					Out.info("************************************************************************************************************************************");
+					Out.info("The server detected that the client is located in a country that H@H does not support.");
+					Out.info(sr.getResponseString());
+					Out.info("The program will now terminate.");
+					Out.info("************************************************************************************************************************************");
+					Out.info("");
+
+					client.dieWithError("The client appears to be located in a country that H@H does not support.");
+				}
 				else {
-					Out.warning("\nAuthentication failed, please re-enter your Client ID and Key (Code: " + sr.getFailCode() + ")");
+					Out.warning("\nAuthentication failed; please re-enter your Client ID and Key (Code: " + sr.getFailCode() + ")");
 					Settings.promptForIDAndKey(client.getInputQueryHandler());
 				}
 			} while(!loginValidated);

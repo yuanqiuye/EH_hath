@@ -1,0 +1,8 @@
+source/build/
+.env
+.env.*
+!docker-compose.example/.env
+*.p12
+client_login
+.idea/
+*.iml

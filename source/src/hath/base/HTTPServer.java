@@ -1,6 +1,6 @@
 /*
 
-Copyright 2008-2023 E-Hentai.org
+Copyright 2008-2026 E-Hentai.org
 https://forums.e-hentai.org/
 tenboro@e-hentai.org
 
@@ -17,7 +17,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Hentai@Home.  If not, see <http://www.gnu.org/licenses/>.
+along with Hentai@Home.  If not, see <https://www.gnu.org/licenses/>.
 
 */
 
@@ -114,7 +114,13 @@ public class HTTPServer implements Runnable {
 			Out.info("Starting up the internal HTTP Server...");
 			SSLServerSocketFactory ssf = sslContext.getServerSocketFactory();
 			listener = (SSLServerSocket) ssf.createServerSocket(port);
-			listener.setEnabledProtocols(new String[]{"TLSv1","TLSv1.1","TLSv1.2"});
+
+			try {
+				listener.setEnabledProtocols(new String[]{"TLSv1.3", "TLSv1.2"});
+			}
+			catch(java.lang.IllegalArgumentException e) {
+				listener.setEnabledProtocols(new String[]{"TLSv1.2"});
+			}
 
 			Out.debug("Initialized SSLContext with cert " + certFile + " and protocol " + sslContext.getProtocol());
 			Out.debug("Supported ciphers: " + Arrays.toString(sslContext.getSupportedSSLParameters().getCipherSuites()));

@@ -1,10 +1,5 @@
 #!/bin/sh
-
-if [ ! -d build ]; then
-mkdir build
-fi
-
-cd src
-find . -type f -name "*.java" -printf "$PWD/%h/%f\n" > ../build/srcfiles.txt
-cd ..
-javac -source 1.8 -target 1.8 -d ./build "@build/srcfiles.txt"
+set -eu
+mkdir -p build
+find src -type f -name '*.java' > build/srcfiles.txt
+javac --release 11 -d ./build @build/srcfiles.txt

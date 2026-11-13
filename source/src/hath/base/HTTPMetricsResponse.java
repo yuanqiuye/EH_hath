@@ -97,7 +97,7 @@ public class HTTPMetricsResponse {
 		
 
 		if(urlparts[1].equals("metrics")) {
-			hpc = new HTTPResponseProcessorText(getMetricsString());
+			hpc = new HTTPResponseProcessorText(getMetricsString(), "text/plain; version=0.0.4; charset=utf-8", java.nio.charset.StandardCharsets.UTF_8);
 			responseStatusCode = 200;
 			return;
 		}
@@ -136,7 +136,7 @@ public class HTTPMetricsResponse {
 					sb.append(",");
 				first = false;
 
-				sb.append(entry.getKey() + "=\"" + entry.getValue() + "\"");
+				sb.append(entry.getKey() + "=\"" + entry.getValue().replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n") + "\"");
 			}
 			sb.append("}");
 		}

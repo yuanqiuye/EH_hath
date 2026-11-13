@@ -120,10 +120,10 @@ public class HTTPMetricsSession implements Runnable {
 			header.append("Date: " + sdf.format(new Date()) + " GMT" + CRLF);
 			header.append("Server: Genetic Lifeform and Distributed Open Server " + Settings.CLIENT_VERSION + CRLF);
 			header.append("Connection: close" + CRLF);
-			header.append("Content-Type: text/plain" + CRLF);
+			header.append("Content-Type: text/plain; version=0.0.4; charset=utf-8" + CRLF);
 
 			if(contentLength > 0) {
-				header.append("Cache-Control: public, max-age=31536000" + CRLF);
+				header.append("Cache-Control: no-store" + CRLF);
 				header.append("Content-Length: " + contentLength + CRLF);
 			}
 

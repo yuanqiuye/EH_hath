@@ -1,6 +1,6 @@
 /*
 
-Copyright 2008-2023 E-Hentai.org
+Copyright 2008-2026 E-Hentai.org
 https://forums.e-hentai.org/
 tenboro@e-hentai.org
 
@@ -17,7 +17,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Hentai@Home.  If not, see <http://www.gnu.org/licenses/>.
+along with Hentai@Home.  If not, see <https://www.gnu.org/licenses/>.
 
 */
 
@@ -32,8 +32,8 @@ public class HTTPBandwidthMonitor {
 	private int[] tickBytes, tickSeconds;
 
 	public HTTPBandwidthMonitor(boolean isSpeedTest) {
-		bytesPerTick = (int) Math.ceil((isSpeedTest ? Settings.getSpeedTestThrottleBytesPerSec() : Settings.getThrottleBytesPerSec())/ TIME_RESOLUTION);
-		millisPerTick = (int) (1000 / TIME_RESOLUTION);
+		bytesPerTick = (int) Math.ceil((isSpeedTest ? Settings.getSpeedTestThrottleBytesPerSec() : Settings.getThrottleBytesPerSec())/ (double) TIME_RESOLUTION);
+		millisPerTick = (int) (1000 / (double) TIME_RESOLUTION);
 		tickBytes = new int[TIME_RESOLUTION];
 		tickSeconds = new int[TIME_RESOLUTION];
 	}

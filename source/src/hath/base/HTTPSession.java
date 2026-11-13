@@ -1,6 +1,6 @@
 /*
 
-Copyright 2008-2023 E-Hentai.org
+Copyright 2008-2026 E-Hentai.org
 https://forums.e-hentai.org/
 tenboro@e-hentai.org
 
@@ -17,7 +17,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Hentai@Home.  If not, see <http://www.gnu.org/licenses/>.
+along with Hentai@Home.  If not, see <https://www.gnu.org/licenses/>.
 
 */
 
@@ -85,37 +85,38 @@ public class HTTPSession implements Runnable {
 
 		try {
 			socket.setSoTimeout(10000);
-			
+
 			reader = new HTTPStreamReader(new InputStreamReader(socket.getInputStream()));
 			writer = new DataOutputStream(socket.getOutputStream());
 
-			// read the header and parse the request - this will also update the response code and initialize the proper response processor
+			// scan through the HTTP request header until we find a GET or HEAD request. everything else is ignored
+			// readLine in HTTPStreamReader is limited to 1000 bytes per line; it will return the first 1000 bytes if the limit is exceeded, and leave the rest of the line intact
+			// if the request header is more than 100 lines or 10000 bytes, we bail, since the request is clearly malformed (and probably malicious)
 			String request = null;
-			int rcvdBytes = 0;
+			int rcvdBytes = 0, readLines = 0;
 
-			// ignore every single line except for the request one. we SSL now, so if there is no end-of-line, just wait for the timeout
 			do {
-				String read = reader.readLine();
+				String currentLine = reader.readLine();
 
-				if(read != null) {
-					rcvdBytes += read.length();
-
-					if(getheadPattern.matcher(read).matches()) {
-						request = read;
-					}
-					else if(read.isEmpty()) {
-						break;
-					}
-				}
-				else {
+				if(currentLine == null) {
+					// EOF
 					break;
 				}
-			} while(true);
-			
+
+				rcvdBytes += currentLine.length();
+
+				if(getheadPattern.matcher(currentLine).matches()) {
+					request = currentLine;
+				}
+				else if(currentLine.isEmpty()) {
+					// end of request header (empty line + EOL)
+					break;
+				}
+			} while( (++readLines < 100) && (rcvdBytes < 10000) );
+
+			// parse the request and get the status code and response processor - in case of an error, this will be a text type with the error message
 			hr = new HTTPResponse(this);
 			hr.parseRequest(request, localNetworkAccess);
-
-			// get the status code and response processor - in case of an error, this will be a text type with the error message
 			hpc = hr.getHTTPResponseProcessor();
 			if(hpc instanceof HTTPResponseProcessorFile) {
 				myThread.setName("Ses_File");
@@ -179,6 +180,8 @@ public class HTTPSession implements Runnable {
 
 			writer.write(headerBytes, 0, headerBytes.length);
 
+			//Out.debug("Wrote " +  headerBytes.length + " header bytes to socket for connId=" + connId + " with contentLength=" + contentLength);
+
 			if(!localNetworkAccess) {
 				Stats.bytesSent(headerBytes.length);
 			}
@@ -204,7 +207,7 @@ public class HTTPSession implements Runnable {
 				if(contentLength > 0) {
 					int writtenBytes = 0;
 					int lastWriteLen = 0;
-					
+
 					// bytebuffers returned by getPreparedTCPBuffer should never have a remaining() larger than Settings.TCP_PACKET_SIZE. if that happens due to some bug, we will hit an IndexOutOfBounds exception during the get below
 					byte[] buffer = new byte[Settings.TCP_PACKET_SIZE];
 
@@ -216,10 +219,12 @@ public class HTTPSession implements Runnable {
 						if(bwm != null && !localNetworkAccess) {
 							bwm.waitForQuota(myThread, lastWriteLen);
 						}
-						
+
 						tcpBuffer.get(buffer, 0, lastWriteLen);
 						writer.write(buffer, 0, lastWriteLen);
 						writtenBytes += lastWriteLen;
+
+						//Out.debug("Wrote " + lastWriteLen + " content bytes to socket for connId=" + connId + " with contentLength=" + contentLength);
 
 						if(!localNetworkAccess) {
 							Stats.bytesSent(lastWriteLen);
@@ -262,6 +267,7 @@ public class HTTPSession implements Runnable {
 			case 405: return "HTTP/1.1 405 Method Not Allowed" + CRLF;
 			case 418: return "HTTP/1.1 418 I'm a teapot" + CRLF;
 			case 501: return "HTTP/1.1 501 Not Implemented" + CRLF;
+			case 503: return "HTTP/1.1 503 Service Unavailable" + CRLF;
 			case 502: return "HTTP/1.1 502 Bad Gateway" + CRLF;
 			default: return "HTTP/1.1 500 Internal Server Error" + CRLF;
 		}
@@ -285,7 +291,7 @@ public class HTTPSession implements Runnable {
 
 		return false;
 	}
-	
+
 	public void forceCloseSocket() {
 		try {
 			if(!socket.isClosed()) {
@@ -328,9 +334,16 @@ public class HTTPSession implements Runnable {
 			int currentIndex = 0;
 			int currentChar = read();
 
-			while( (currentChar != CR) && (currentChar != LF) && (currentChar >= 0) && (currentIndex < maxLen) ) {
-				// not EOF or EOL; add to the buffer and keep reading
+			while( (currentChar != CR) && (currentChar != LF) && (currentChar >= 0) ) {
+				// not EOF or EOL; add it to the buffer
 				buffer[currentIndex++] = (char) currentChar;
+
+				if(currentIndex >= maxLen) {
+					// we are at the maxLen limit; exit the loop after adding the last char to the buffer but before reading the next char
+					// currentChar is now a non-EOL and non-EOF character, which will trigger the EOL read-ahead check below
+					break;
+				}
+
 				currentChar = read();
 			}
 
@@ -348,7 +361,7 @@ public class HTTPSession implements Runnable {
 				}
 			}
 			else if(currentChar != LF) {
-				// we exited the loop without ending on a CR or LF, meaning we hit the maxLen limit; check if the next character is CR/LF and discard if so
+				// we exited the loop without ending on a CR or LF, meaning we hit the maxLen limit; check if the next character is CR/LF and discard if so, otherwise leave it intact
 				mark(1);
 				currentChar = read();
 
@@ -356,9 +369,9 @@ public class HTTPSession implements Runnable {
 					mark(1);
 
 					if(read() != LF) {
-						reset();	
+						reset();
 					}
-				} 
+				}
 				else if(currentChar != LF) {
 					reset();
 				}

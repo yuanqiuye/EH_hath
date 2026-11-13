@@ -1,9 +1,9 @@
 # H@H client with prometheus metrics
-![ci](https://img.shields.io/github/actions/workflow/status/mixa3607/EH_hath/push.yml?branch=master&style=flat-square)
+![ci](https://img.shields.io/github/actions/workflow/status/yuanqiuye/EH_hath/test.yml?branch=master&style=flat-square)
 ![license](https://img.shields.io/github/license/mixa3607/EH_hath?style=flat-square)
 
 ## About
-This is fork of original [H@H 1.6.2](https://repo.e-hentai.org/hath/HentaiAtHome_1.6.2_src.zip) from [e-hentai.org](https://e-hentai.org/). You can compare this code with branch `SRC_1.6.2`
+This is a custom [H@H 1.6.6](https://upld.e-hentai.org/hath/HentaiAtHome_1.6.6_src.zip) client with Prometheus metrics, independent upload/speedtest throttles, bounded cache lookups and gallery ZIP downloads. See [upgrade and validation notes](./UPGRADE-1.6.6.md). Docker uses Temurin 21 LTS; manual builds require JDK 11 or newer. Run `./test.sh` for regression checks.
 
 Some code used from [this post (roundpixl)](https://forums.e-hentai.org/index.php?showtopic=255336)
 
@@ -45,8 +45,3 @@ Label values:
 - user - arg `--metrics-name=$METRICS_CLIENT_NAME`
 - name - arg `--metrics-user=$METRICS_USER_ID`
 - host - resolved from command server
-
-
-### Grafana sample dashboard
-![grafana](./grafana1.png)
-> ### For more metrics you can also use [EH_metrics](https://github.com/mixa3607/EH_metrics) project
